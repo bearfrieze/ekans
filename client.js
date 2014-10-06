@@ -1,11 +1,12 @@
 // Config and stuffs
 var svgns = "http://www.w3.org/2000/svg",
 	scale = 10,
-	colors = ['white', 'red', 'green', 'blue', 'orange'],
+	colors = ['white', 'red', 'green', 'blue', 'orange', 'purple', 'aqua'],
 	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]};
 
 // Set up WebSocket and listeners
-var ws = new WebSocket("ws://ekans.herokuapp.com/"),
+var host = location.origin.replace(/^http/, 'ws'),
+	ws = new WebSocket(host),
 	game = null;
 ws.addEventListener('open', function() {
 	ws.send(JSON.stringify({
@@ -81,7 +82,7 @@ Game.prototype.reset = function(message) {
 	this.timer();
 };
 Game.prototype.renderSingle = function(x, y) {
-	var color = colors[this.board[y][x]];
+	var color = colors[this.board[y][x] % colors.length];
 	this.rects[y][x].setAttribute('style', 'fill:' + color + ';');
 }
 Game.prototype.render = function() {
