@@ -5,7 +5,7 @@ var svgns = "http://www.w3.org/2000/svg",
 	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]};
 
 // Set up WebSocket and listeners
-var ws = new WebSocket("ws://localhost:8080"),
+var ws = new WebSocket("ws://localhost:5000"),
 	game = null;
 ws.addEventListener('open', function() {
 	ws.send(JSON.stringify({

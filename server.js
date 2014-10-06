@@ -1,11 +1,24 @@
 // Set up server
-var WebSocketServer = require('ws').Server,
-	wss = new WebSocketServer({port: 8080}),
-	games = {};
+var WebSocketServer = require("ws").Server,
+	http = require("http"),
+	express = require("express"),
+	app = express(),
+	port = process.env.PORT || 5000;
+
+app.use(express.static(__dirname + "/"))
+
+var server = http.createServer(app);
+server.listen(port);
+
+console.log("http server listening on %d", port);
+
+var wss = new WebSocketServer({server: server});
+console.log("websocket server created");
 
 // Listen for new players and put them into games
+var games = {};
 wss.on('connection', function(ws) {
-	console.log('Client connected');
+	console.log('client connected');
 	ws.on('message', function(json) {
 		var message = JSON.parse(json);
 		if (message.type == 'connect') {
@@ -62,7 +75,7 @@ Game.prototype.join = function(ws) {
 		}
 	}.bind(this))
 	ws.on('close', function() {
-		console.log('Client disconnected');
+		console.log('client disconnected');
 		delete this.players[id];
 	}.bind(this));
 };
