@@ -1,8 +1,8 @@
 // Config and stuffs
 var svgns = "http://www.w3.org/2000/svg",
 	scale = 10,
-	colors = ['white', 'red', 'green', 'blue', 'orange', 'purple', 'aqua'],
-	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]};
+	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]},
+	hues = [0, 180, 90, 270, 45, 225, 135, 315];
 
 // Set up WebSocket and listeners
 var host = location.origin.replace(/^http/, 'ws'),
@@ -82,7 +82,12 @@ Game.prototype.reset = function(message) {
 	this.timer();
 };
 Game.prototype.renderSingle = function(x, y) {
-	var color = colors[this.board[y][x] % colors.length];
+	if (this.board[y][x] > 0) {
+		var hue = hues[this.board[y][x] % hues.length],
+			color = 'hsl(' + hue + ', 80%, 50%)';
+	} else {
+		var color = 'white';
+	}
 	this.rects[y][x].setAttribute('style', 'fill:' + color + ';');
 }
 Game.prototype.render = function() {
