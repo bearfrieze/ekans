@@ -6,7 +6,8 @@ var svgns = "http://www.w3.org/2000/svg",
 	padding = 1;
 
 // Set up WebSocket and listeners
-var host = location.origin.replace(/^http/, 'ws'),
+var isLocal = new RegExp('localhost').test(location.origin),
+	host = isLocal ? location.origin.replace(/^http/, 'ws') : 'ws://ekans.herokuapp.com',
 	ws = new WebSocket(host),
 	game = null;
 ws.addEventListener('open', function() {
