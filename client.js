@@ -74,7 +74,6 @@ Game.prototype.initialize = function(message) {
 	this.reset(message);
 
 	document.onkeydown = function(e) {
-		e.preventDefault();
 		switch (e.keyCode) {
 			case 37: var temp = moves['left']; break;
 			case 38: var temp = moves['up']; break;
@@ -82,8 +81,11 @@ Game.prototype.initialize = function(message) {
 			case 40: var temp = moves['down']; break;
 			default: return;
 		}
-		if (-temp[0] == this.direction[0] && -temp[1] == this.direction[1]) return;
-		this.direction = temp;
+		if (temp) {
+			e.preventDefault()
+			if (-temp[0] == this.direction[0] && -temp[1] == this.direction[1]) return;
+			this.direction = temp;
+		}
 	}.bind(this);
 };
 Game.prototype.reset = function(message) {
