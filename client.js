@@ -1,6 +1,5 @@
 // Config and stuffs
 var svgns = "http://www.w3.org/2000/svg",
-	scale = 10,
 	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]},
 	hues = [0, 180, 90, 270, 45, 225, 135, 315];
 
@@ -40,18 +39,18 @@ Game.prototype.initialize = function(message) {
 	this.rows = this.board.length;
 
 	this.svg = document.createElementNS(svgns, 'svg');
-	this.svg.setAttribute('width', this.cols * scale);
-	this.svg.setAttribute('height', this.rows * scale);
-	this.svg.setAttribute('style', 'border: 1px solid black;');
+	this.svg.setAttribute('viewBox', [0, 0, this.cols, this.rows].toString());
+	this.svg.setAttribute('preserveAspectRatio', 'xMidYMid');
+	this.svg.setAttribute('style', 'border: 1px solid black; width: 100%; height: auto;');
 	this.rects = [];
 	for (var y = 0; y < this.rows; y++) {
 		this.rects[y] = [];
 		for (var x = 0; x < this.cols; x++) {
 			var rect = document.createElementNS(svgns, 'rect');
-			rect.setAttribute('width', scale);
-			rect.setAttribute('height', scale);
-			rect.setAttribute('x', x * scale);
-			rect.setAttribute('y', y * scale);
+			rect.setAttribute('width', 1);
+			rect.setAttribute('height', 1);
+			rect.setAttribute('x', x);
+			rect.setAttribute('y', y);
 			this.rects[y][x] = rect;
 			this.svg.appendChild(rect);
 		}

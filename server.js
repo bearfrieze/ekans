@@ -21,7 +21,7 @@ wss.on('connection', function(ws) {
 		var message = JSON.parse(json);
 		if (message.type == 'connect') {
 			var id = message.id;
-			if (!games[id]) games[id] = new Game(50, 50);
+			if (!games[id]) games[id] = new Game(80, 40);
 			games[id].join(ws);
 		}
 	});
