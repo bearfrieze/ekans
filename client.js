@@ -1,7 +1,9 @@
 // Config and stuffs
 var svgns = "http://www.w3.org/2000/svg",
+	directions = ['left', 'up', 'right', 'down'],
 	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]},
-	hues = [0, 180, 90, 270, 45, 225, 135, 315];
+	hues = [0, 180, 90, 270, 45, 225, 135, 315],
+	padding = 1;
 
 // Set up WebSocket and listeners
 var host = location.origin.replace(/^http/, 'ws'),
@@ -10,14 +12,13 @@ var host = location.origin.replace(/^http/, 'ws'),
 ws.addEventListener('open', function() {
 	ws.send(JSON.stringify({
 		type: 'connect',
-		id: 'yellowWorld'
+		gameid: 'yellowWorld'
 	}));
 });
 ws.addEventListener('message', function(event) {
 	var message = JSON.parse(event.data);
-	if (message.type == 'newgame') {
+	if (message.type == 'join') {
 		game = new Game(message);
-		game.timer();
 	} else if (message.type == 'move') {
 		game.input(message);
 	} else if (message.type == 'gameover') {
@@ -27,34 +28,47 @@ ws.addEventListener('message', function(event) {
 	}
 });
 
+// Utility
+var getRect = function(x, y, width, height) {
+	var rect = document.createElementNS(svgns, 'rect');
+	rect.setAttribute('x', x);
+	rect.setAttribute('y', y);
+	rect.setAttribute('width', width);
+	rect.setAttribute('height', height);
+	return rect;
+}
+
 // Game
 var Game = function(message) {
 	this.initialize(message);
 }
 Game.prototype.initialize = function(message) {
 
-	this.id = message.id;
+	this.playerid = message.playerid;
 	this.board = message.board;
+	this.round = message.round;
 	this.cols = this.board[0].length;
 	this.rows = this.board.length;
 
 	this.svg = document.createElementNS(svgns, 'svg');
-	this.svg.setAttribute('viewBox', [0, 0, this.cols, this.rows].toString());
+	this.svg.setAttribute('viewBox', [0, 0, this.cols + padding * 2, this.rows + padding * 2].toString());
 	this.svg.setAttribute('preserveAspectRatio', 'xMidYMid');
-	this.svg.setAttribute('style', 'border: 1px solid black; width: 100%; height: auto;');
+	this.svg.setAttribute('style', 'width: 100%; height: auto; background: black;');
+	this.backdrop = getRect(padding, padding, this.cols, this.rows);
+	this.backdrop.setAttribute('style', 'fill: white;');
+	this.svg.appendChild(this.backdrop);
 	this.rects = [];
 	for (var y = 0; y < this.rows; y++) {
 		this.rects[y] = [];
 		for (var x = 0; x < this.cols; x++) {
-			var rect = document.createElementNS(svgns, 'rect');
-			rect.setAttribute('width', 1);
-			rect.setAttribute('height', 1);
-			rect.setAttribute('x', x);
-			rect.setAttribute('y', y);
+			var rect = getRect(x + padding, y + padding, 1, 1);
 			this.rects[y][x] = rect;
 			this.svg.appendChild(rect);
 		}
 	}
+	this.overlay = getRect(0, 0, this.cols + padding * 2, this.rows + padding * 2);
+	this.overlay.setAttribute('fill-opacity', '0');
+	this.svg.appendChild(this.overlay);
 	document.body.appendChild(this.svg);
 	this.reset(message);
 
@@ -68,25 +82,25 @@ Game.prototype.initialize = function(message) {
 			default: return;
 		}
 		e.preventDefault();
-	};
+	}.bind(this);
 };
 Game.prototype.reset = function(message) {
 	this.board = message.board;
-	this.location = {
-		x: Math.floor(Math.random() * this.cols),
-		y: Math.floor(Math.random() * this.rows)
-	};
-	this.direction = moves['right'];
+	this.round = message.round;
 	this.render();
-	this.timer();
+	if (message.type == 'reset') {
+		this.direction = moves[directions[Math.floor(Math.random() * directions.length)]];
+		this.location = message.location;
+		var color = (message.winner) ? this.getColor(message.winner) : 'black';
+		this.overlay.setAttribute('style', 'fill-opacity: 1; fill:' + color + ';');
+		setTimeout(function() {
+			this.overlay.setAttribute('style', 'fill-opacity: 0;');
+			this.timer();
+		}.bind(this), 500);
+	}
 };
 Game.prototype.renderSingle = function(x, y) {
-	if (this.board[y][x] > 0) {
-		var hue = hues[this.board[y][x] % hues.length],
-			color = 'hsl(' + hue + ', 80%, 50%)';
-	} else {
-		var color = 'white';
-	}
+	var color = this.getColor(this.board[y][x]);
 	this.rects[y][x].setAttribute('style', 'fill:' + color + ';');
 }
 Game.prototype.render = function() {
@@ -96,17 +110,23 @@ Game.prototype.render = function() {
 		}
 	}
 };
-Game.prototype.input = function(m) {
-	this.board[m.y][m.x] = m.id;
-	this.renderSingle(m.x, m.y);
+Game.prototype.input = function(move) {
+	if (move.round != this.round) return;
+	if (move.y in this.board && move.x in this.board[move.y]) {
+		this.board[move.y][move.x] = move.playerid;
+		this.renderSingle(move.x, move.y);
+	}
 };
 Game.prototype.move = function() {
-	ws.send(JSON.stringify({
+	var move = {
 		type: 'move',
-		id: this.id,
+		playerid: this.playerid,
+		round: this.round,
 		x: this.location.x += this.direction[0],
 		y: this.location.y += this.direction[1]
-	}));
+	};
+	ws.send(JSON.stringify(move));
+	this.input(move);
 };
 Game.prototype.timer = function() {
 	clearInterval(this.interval);
@@ -117,3 +137,7 @@ Game.prototype.timer = function() {
 			clearInterval(this.interval);
 	}.bind(this), 100);
 };
+Game.prototype.getColor = function(id) {
+	if (id == 0) return 'white';
+	return 'hsl(' + hues[id % hues.length] + ', 80%, 50%)';
+}
