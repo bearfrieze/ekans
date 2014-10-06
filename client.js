@@ -112,10 +112,8 @@ Game.prototype.render = function() {
 };
 Game.prototype.input = function(move) {
 	if (move.round != this.round) return;
-	if (move.y in this.board && move.x in this.board[move.y]) {
-		this.board[move.y][move.x] = move.playerid;
-		this.renderSingle(move.x, move.y);
-	}
+	this.board[move.y][move.x] = move.playerid;
+	this.renderSingle(move.x, move.y);
 };
 Game.prototype.move = function() {
 	var move = {
@@ -126,7 +124,10 @@ Game.prototype.move = function() {
 		y: this.location.y += this.direction[1]
 	};
 	ws.send(JSON.stringify(move));
-	this.input(move);
+	if (move.y in this.board)
+		if (move.x in this.board[move.y])
+			if (this.board[move.y][move.x] == 0)
+				this.input(move);
 };
 Game.prototype.timer = function() {
 	clearInterval(this.interval);
