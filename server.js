@@ -49,7 +49,7 @@ Game.prototype.join = function(ws) {
 	ws.on('message', function(json) {
 		var move = JSON.parse(json);
 		if (move.type == 'move') {
-			console.log(move);
+			// console.log(move);
 			if (this.valid(move)) {
 				this.board[move.y][move.x] = move.id;
 				for (var id in this.players)

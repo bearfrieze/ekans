@@ -1,0 +1,12 @@
+{
+	"name": "ekans",
+	"version": "0.1.1",
+	"description": "A simple distributed snake/achtung game.",
+	"author": "Bjørn Friese <bearfrieze@gmail.com>",
+	"repository": {
+		"type": "git"
+	},
+	"dependencies": {
+		"ws": "*"
+	}
+}
