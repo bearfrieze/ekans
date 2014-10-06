@@ -73,16 +73,17 @@ Game.prototype.initialize = function(message) {
 	document.body.appendChild(this.svg);
 	this.reset(message);
 
-	var that = this;
 	document.onkeydown = function(e) {
+		e.preventDefault();
 		switch (e.keyCode) {
-			case 37: that.direction = moves['left']; break;
-			case 38: that.direction = moves['up']; break;
-			case 39: that.direction = moves['right']; break;
-			case 40: that.direction = moves['down']; break;
+			case 37: var temp = moves['left']; break;
+			case 38: var temp = moves['up']; break;
+			case 39: var temp = moves['right']; break;
+			case 40: var temp = moves['down']; break;
 			default: return;
 		}
-		e.preventDefault();
+		if (-temp[0] == this.direction[0] && -temp[1] == this.direction[1]) return;
+		this.direction = temp;
 	}.bind(this);
 };
 Game.prototype.reset = function(message) {

@@ -41,7 +41,6 @@ Game.prototype.initialize = function(cols, rows) {
 	this.spawns = [];
 };
 Game.prototype.reset = function(winner) {
-	console.log(winner);
 	for (var y = 0; y < this.rows; y++) {
 		this.board[y] = [];
 		for (var x = 0; x < this.cols; x++) {
@@ -60,7 +59,7 @@ Game.prototype.reset = function(winner) {
 		}));
 		this.players[player].alive = true;
 	}
-	// console.log('reset, round: ' + this.round);
+	console.log('reset, round: ' + this.round);
 };
 Game.prototype.join = function(ws) {
 	var playerid = ++this.playerid;
