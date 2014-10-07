@@ -23,7 +23,7 @@ ws.addEventListener('message', function(event) {
 	} else if (message.type == 'move') {
 		game.input(message);
 	} else if (message.type == 'gameover') {
-		clearInterval(game.interval);
+		game.timer.postMessage('stop');
 	} else if (message.type == 'reset') {
 		game.reset(message);
 	}
@@ -87,6 +87,13 @@ Game.prototype.initialize = function(message) {
 			this.direction = temp;
 		}
 	}.bind(this);
+
+	this.timer = new Worker('timerWorker.js');
+	this.timer.onmessage = function() {
+		console.timeEnd("interval");
+		this.move();
+		console.time("interval");
+	}.bind(this);
 };
 Game.prototype.reset = function(message) {
 	this.board = message.board;
@@ -99,7 +106,7 @@ Game.prototype.reset = function(message) {
 		this.overlay.setAttribute('style', 'fill-opacity: 1; fill:' + color + ';');
 		setTimeout(function() {
 			this.overlay.setAttribute('style', 'fill-opacity: 0;');
-			this.timer();
+			this.timer.postMessage('100');
 		}.bind(this), 500);
 	}
 };
@@ -128,19 +135,12 @@ Game.prototype.move = function() {
 		y: this.location.y += this.direction[1]
 	};
 	ws.send(JSON.stringify(move));
-	if (move.y in this.board)
-		if (move.x in this.board[move.y])
-			if (this.board[move.y][move.x] == 0)
-				this.input(move);
-};
-Game.prototype.timer = function() {
-	clearInterval(this.interval);
-	this.interval = setInterval(function() {
-		if (ws.readyState == 1)
-			this.move();
+	
+	if (move.y in this.board && move.x in this.board[move.y])
+		if (this.board[move.y][move.x] == 0)
+			this.input(move);
 		else
-			clearInterval(this.interval);
-	}.bind(this), 100);
+			this.timer.postMessage('stop');
 };
 Game.prototype.getColor = function(id) {
 	if (id == 0) return 'white';
