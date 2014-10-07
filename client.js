@@ -89,11 +89,7 @@ Game.prototype.initialize = function(message) {
 	}.bind(this);
 
 	this.timer = new Worker('timerWorker.js');
-	this.timer.onmessage = function() {
-		console.timeEnd("interval");
-		this.move();
-		console.time("interval");
-	}.bind(this);
+	this.timer.onmessage = this.move.bind(this);
 };
 Game.prototype.reset = function(message) {
 	this.board = message.board;

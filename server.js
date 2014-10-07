@@ -35,7 +35,6 @@ Game.prototype.initialize = function(cols, rows) {
 	this.cols = cols;
 	this.rows = rows;
 	this.players = {};
-	this.playerid = 0;
 	this.board = [];
 	this.round = 0;
 	this.spawns = [];
@@ -62,7 +61,8 @@ Game.prototype.reset = function(winner) {
 	console.log('reset, round: ' + this.round);
 };
 Game.prototype.join = function(ws) {
-	var playerid = ++this.playerid;
+	var playerid = 0;
+	while (true) if (!('' + ++playerid in this.players)) break;
 	this.players[playerid] = {
 		ws: ws,
 		alive: false
