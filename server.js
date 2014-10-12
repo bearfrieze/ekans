@@ -1,17 +1,26 @@
 // Set up server
-var WebSocketServer = require("ws").Server,
-	http = require("http"),
-	express = require("express"),
+var WebSocketServer = require('ws').Server,
+	http = require('http'),
+	express = require('express'),
 	app = express(),
 	port = process.env.PORT || 5000;
-app.use(express.static(__dirname + "/"))
+app.use(express.static(__dirname + '/'))
 
 var server = http.createServer(app);
 server.listen(port);
-console.log("http server listening on %d", port);
+console.log('http server listening on %d', port);
 
 var wss = new WebSocketServer({server: server});
-console.log("websocket server created");
+console.log('websocket server created');
+
+// Load snakes (room names)
+var fs = require('fs');
+var snakes;
+fs.readFile('snakes.json', 'utf8', function(error, data) {
+	if (error) return console.log(error);
+	snakes = JSON.parse(data);
+	console.log(snakes);
+});
 
 // Listen for new players and put them into games
 var games = {};

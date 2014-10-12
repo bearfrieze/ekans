@@ -46,14 +46,12 @@ var parser = new htmlparser.Parser({
 
 // Fetch some snake and tell the snake handler to tame them
 request(url, function(error, response, body) {
-	if (!error) {
-		parser.write(body);
-		parser.end();
-		// Store the snakes a safe place where they won't escape
-		fs.writeFile('snakes.json', JSON.stringify(snakes), function(error) {
-			console.log((error) ? error : 'Snakes handled and saved!');
-		});
-	} else {
-		console.log(error);
-	}
+	if (error) return console.log(error);
+	parser.write(body);
+	parser.end();
+	// Store the snakes a safe place where they won't escape
+	fs.writeFile('snakes.json', JSON.stringify(snakes), function(error) {
+		if (error) return console.log(error);
+		console.log('Snakes handled and saved!');
+	});
 });
