@@ -2,7 +2,7 @@
 var svgns = "http://www.w3.org/2000/svg",
 	directions = ['left', 'up', 'right', 'down'],
 	moves = {left: [-1, 0], up: [0, -1], right: [1, 0], down: [0, 1]},
-	hues = [0, 180, 90, 270, 45, 225, 135, 315],
+	colors = ['#C7493A','#6CAE3F','#7A6CBF','#A95574','#AE7F34','#618AA6','#CD53C2','#4F7F52'],
 	padding = 1;
 
 // Set up WebSocket and listeners
@@ -54,7 +54,7 @@ Game.prototype.initialize = function(message) {
 	this.svg = document.createElementNS(svgns, 'svg');
 	this.svg.setAttribute('viewBox', [0, 0, this.cols + padding * 2, this.rows + padding * 2].toString());
 	this.svg.setAttribute('preserveAspectRatio', 'xMidYMid');
-	this.svg.setAttribute('style', 'width: 100%; height: auto; background: black;');
+	this.svg.setAttribute('style', 'width: 100%; height: auto; background: #333;');
 	this.backdrop = getRect(padding, padding, this.cols, this.rows);
 	this.backdrop.setAttribute('style', 'fill: white;');
 	this.svg.appendChild(this.backdrop);
@@ -98,7 +98,7 @@ Game.prototype.reset = function(message) {
 	if (message.type == 'reset') {
 		this.direction = moves[directions[Math.floor(Math.random() * directions.length)]];
 		this.location = message.location;
-		var color = (message.winner) ? this.getColor(message.winner) : 'black';
+		var color = (message.winner) ? this.getColor(message.winner) : '#333';
 		this.overlay.setAttribute('style', 'fill-opacity: 1; fill:' + color + ';');
 		setTimeout(function() {
 			this.overlay.setAttribute('style', 'fill-opacity: 0;');
@@ -140,5 +140,5 @@ Game.prototype.move = function() {
 };
 Game.prototype.getColor = function(id) {
 	if (id == 0) return 'white';
-	return 'hsl(' + hues[id % hues.length] + ', 80%, 50%)';
+	return colors[(id - 1) % colors.length];
 }
