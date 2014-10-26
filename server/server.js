@@ -86,6 +86,7 @@ Game.prototype.initialize = function(cols, rows, room) {
 	this.numPlayers = 0;
 	this.board = [];
 	this.round = 0;
+	this.foods = [];
 };
 
 Game.prototype.reset = function(winner) {
@@ -109,14 +110,10 @@ Game.prototype.reset = function(winner) {
 
 		// Dress the spawn location as a move and handle it
 		var spawn = this.spawnLocation();
-		var move = {
-			type: 'move',
-			id: player.id,
-			round: this.round,
-			x: spawn.x,
-			y: spawn.y
-		};
-		this.handleMove(move, player);
+		spawn.type = 'move';
+		spawn.id = player.id;
+		spawn.round = this.round;
+		this.handleMove(spawn, player);
 	}
 
 	for (var id in this.players) {
@@ -125,10 +122,13 @@ Game.prototype.reset = function(winner) {
 			board: this.board,
 			round: this.round,
 			players: this.shallowPlayers(),
-			location: player.moves[0],
+			location: this.players[id].moves[0],
 			winner: winner
 		}));
 	}
+
+	while (this.foods.length) this.foods.pop();
+	this.spawnFood();
 
 	console.log(this.room + ' : round ' + this.round);
 };
@@ -177,6 +177,18 @@ Game.prototype.join = function(player) {
 
 Game.prototype.handleMove = function(move, player) {
 
+	if (this.board[move.y][move.x] == -1) {
+		for (var i = 0; i < this.foods.length; i++) {
+			var food = this.foods[i];
+			if (food.x = move.x && food.y == move.y) {
+				player.length += food.energy;
+				this.foods[i] = this.foods.pop();
+				this.spawnFood();
+				break;
+			}
+		}
+	}
+
 	this.board[move.y][move.x] = player.id;
 	player.moves[player.moveCount] = move;
 
@@ -208,33 +220,39 @@ Game.prototype.kill = function(id) {
 Game.prototype.valid = function(move) {
 	if (!(move.y in this.board)) return false;
 	if (!(move.x in this.board[move.y])) return false;
-	if (this.board[move.y][move.x] !== 0) return false;
+	if (this.board[move.y][move.x] > 0) return false;
 	if (!this.players[move.id].alive) return false;
 	return true;
 };
 
-Game.prototype.spawnLocation = function() {
+Game.prototype.spawnLocation = function(food) {
 	// Best-candidate: http://bl.ocks.org/mbostock/d7bf3bd67d00ed79695b
 	var max = -Infinity,
 	 	best = {x: 0, y: 0};
 	var min, x, y, dx, dy, dist;
+	var magic = function(point) {
+		dx = x - point.x;
+		dy = y - point.y;
+		dist = Math.sqrt(dx * dx + dy * dy);
+		min = Math.min(dist, min);
+	}
 	for (var i = 0; i < 5; i++) {
 		min = Infinity;
 		x = Math.floor(Math.random() * this.cols);
 		y = Math.floor(Math.random() * this.rows);
-		min = Math.min(0 + x, min); // Left
-		min = Math.min(0 + y, min); // Top
-		min = Math.min(this.cols - x, min); // Right
-		min = Math.min(this.rows - y, min); // Bottom
+		if (!food) {
+			min = Math.min(0 + x, min); // Left
+			min = Math.min(0 + y, min); // Top
+			min = Math.min(this.cols - x, min); // Right
+			min = Math.min(this.rows - y, min); // Bottom
+		}
 		for (var id in this.players) {
 			var player = this.players[id];
 			if (!player.moveCount) continue;
-			var head = player.moves[player.moveCount - 1];
-			dx = x - head.x;
-			dy = y - head.y;
-			dist = Math.sqrt(dx * dx + dy * dy);
-			min = Math.min(dist, min);
+			magic(player.moves[player.moveCount - 1]);
 		}
+		for (var j = 0; j < this.foods.length; j++)
+			if (this.foods[j]) magic(this.foods[j]);
 		if (min > max) {
 			max = min;
 			best.x = x;
@@ -246,6 +264,20 @@ Game.prototype.spawnLocation = function() {
 		y: best.y
 	};
 };
+
+Game.prototype.spawnFood = function() {
+
+	var food = this.spawnLocation(true);
+	if (this.board[food.y][food.x] != 0) return this.spawnFood();
+	this.board[food.y][food.x] = -1;
+
+	food.type = 'food';
+	food.energy = 10;
+	this.foods.push(food);
+
+	for (var id in this.players)
+		this.players[id].ws.send(JSON.stringify(food));
+}
 
 Game.prototype.shallowPlayers = function() {
 	var players = [];

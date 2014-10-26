@@ -31,6 +31,8 @@ ws.addEventListener('message', function(event) {
 		game = new Game(message);
 	} else if (message.type == 'move') {
 		game.input(message);
+	} else if (message.type == 'food') {
+		game.food(message);
 	} else if (message.type == 'gameover') {
 		game.timer.postMessage('stop');
 	} else if (message.type == 'reset') {
@@ -120,7 +122,7 @@ Game.prototype.reset = function(message) {
 		this.overlay.setAttribute('style', 'fill-opacity: 1; fill:' + color + ';');
 		setTimeout(function() {
 			this.overlay.setAttribute('style', 'fill-opacity: 0;');
-			this.timer.postMessage('100');
+			this.timer.postMessage('90');
 		}.bind(this), 500);
 	}
 	this.render();
@@ -183,10 +185,15 @@ Game.prototype.move = function() {
 	
 	// Check if suicide
 	if (move.y in this.board && move.x in this.board[move.y])
-		if (this.board[move.y][move.x] == 0)
+		if (this.board[move.y][move.x] <= 0)
 			this.input(move);
 		else
 			this.timer.postMessage('stop');
+};
+
+Game.prototype.food = function(food) {
+	this.board[food.y][food.x] = -1;
+	this.renderSingle(food.x, food.y);
 };
 
 Game.prototype.getColor = function(id) {
