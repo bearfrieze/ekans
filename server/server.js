@@ -4,7 +4,7 @@ var WebSocketServer = require('ws').Server,
 	express = require('express'),
 	app = express(),
 	port = process.env.PORT || 5000;
-app.use(express.static(__dirname + '/'));
+app.use(express.static(__dirname + '/../client/'));
 
 var server = http.createServer(app);
 server.listen(port);
@@ -16,7 +16,7 @@ console.log('websocket server created');
 // Load snakes (game id's)
 var fs = require('fs'),
 	snakes;
-fs.readFile('snakes.json', 'utf8', function(error, data) {
+fs.readFile('server/snakes.json', 'utf8', function(error, data) {
 	if (error) return console.log(error);
 	snakes = JSON.parse(data);
 });
@@ -53,12 +53,22 @@ wss.on('connection', function(ws) {
 			if (!games[room]) games[room] = new Game(80, 40, room);
 
 			// Have player join the game
+			var game = games[room];
 			var player = {
 				ws: ws,
 				name: message.name,
-				alive: false
+				alive: false,
+				moves: new Array(1000)
 			};
-			games[room].join(player);
+			game.join(player);
+
+			// When player disconnnects
+			ws.on('close', function() {
+				console.log(room + ' : client disconnected');
+				delete game.players[player.id];
+				game.numPlayers--;
+				if (game.numPlayers <= 0) delete games[room];
+			});
 		}
 	});
 });
@@ -76,18 +86,38 @@ Game.prototype.initialize = function(cols, rows, room) {
 	this.numPlayers = 0;
 	this.board = [];
 	this.round = 0;
-	this.spawns = [];
 };
 
 Game.prototype.reset = function(winner) {
+
 	for (var y = 0; y < this.rows; y++) {
 		this.board[y] = [];
 		for (var x = 0; x < this.cols; x++) {
 			this.board[y][x] = 0;
 		}
 	}
-	while (this.spawns.length) this.spawns.pop();
+
 	this.round++;
+
+	for (var id in this.players) {
+
+		// Reset player
+		var player = this.players[id];
+		player.alive = true;
+		player.length = 10;
+		player.moveCount = 0;
+
+		// Dress the spawn location as a move and handle it
+		var spawn = this.spawnLocation();
+		var move = {
+			type: 'move',
+			id: player.id,
+			round: this.round,
+			x: spawn.x,
+			y: spawn.y
+		};
+		this.handleMove(move, player);
+	}
 
 	for (var id in this.players) {
 		this.players[id].ws.send(JSON.stringify({
@@ -95,11 +125,11 @@ Game.prototype.reset = function(winner) {
 			board: this.board,
 			round: this.round,
 			players: this.shallowPlayers(),
-			location: this.spawnLocation(),
+			location: player.moves[0],
 			winner: winner
 		}));
-		this.players[id].alive = true;
 	}
+
 	console.log(this.room + ' : round ' + this.round);
 };
 
@@ -133,7 +163,7 @@ Game.prototype.join = function(player) {
 		var move = JSON.parse(json);
 		if (move.type == 'move' && move.round == this.round) {
 			if (this.valid(move)) {
-				this.board[move.y][move.x] = move.id;
+				this.handleMove(move, player);
 				for (var id in this.players)
 					this.players[id].ws.send(json);
 			} else {
@@ -143,12 +173,28 @@ Game.prototype.join = function(player) {
 			}
 		}
 	}.bind(this));
-	player.ws.on('close', function() {
-		console.log(this.room + ' : client disconnected');
-		delete this.players[player.id];
-		this.numPlayers--;
-	}.bind(this));
 };
+
+Game.prototype.handleMove = function(move, player) {
+
+	this.board[move.y][move.x] = player.id;
+	player.moves[player.moveCount] = move;
+
+	if (player.moveCount >= player.length) {
+		var i = player.moveCount - player.length;
+		if (player.moves[i]) {
+			var clear = player.moves[i];
+			this.board[clear.y][clear.x] = 0;
+			clear.id = 0;
+			clear = JSON.stringify(clear);
+			for (var id in this.players)
+				this.players[id].ws.send(clear);
+			delete player.moves[i];
+		}
+	}
+
+	player.moveCount++;
+}
 
 Game.prototype.kill = function(id) {
 	this.players[id].alive = false;
@@ -180,9 +226,12 @@ Game.prototype.spawnLocation = function() {
 		min = Math.min(0 + y, min); // Top
 		min = Math.min(this.cols - x, min); // Right
 		min = Math.min(this.rows - y, min); // Bottom
-		for (var j = 0; j < this.spawns.length; j++) {
-			dx = x - this.spawns[j].x;
-			dy = y - this.spawns[j].y;
+		for (var id in this.players) {
+			var player = this.players[id];
+			if (!player.moveCount) continue;
+			var head = player.moves[player.moveCount - 1];
+			dx = x - head.x;
+			dy = y - head.y;
 			dist = Math.sqrt(dx * dx + dy * dy);
 			min = Math.min(dist, min);
 		}
@@ -192,7 +241,6 @@ Game.prototype.spawnLocation = function() {
 			best.y = y;
 		}
 	}
-	this.spawns.push(best);
 	return {
 		x: best.x,
 		y: best.y

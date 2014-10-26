@@ -1,1 +1,1 @@
-web: node snakeHandler.js && node server.js
+web: node server/snakeHandler.js && node server/server.js
