@@ -2,8 +2,89 @@
 <html>
 <head>
 	<title>Ekans</title>
+	<link rel="stylesheet" type="text/css" href="normalize.css">
+	<style type="text/css">
+
+	/* Container */
+	/* http://zerosixthree.se/vertical-align-anything-with-just-3-lines-of-css/ */
+
+	@import url(http://fonts.googleapis.com/css?family=Inconsolata:400,700);
+	html, body {
+		height: 100%;
+		font-family: 'Inconsolata', 'Menlo', monospace;
+		color: #333;
+	}
+	body {
+		-webkit-transform-style: preserve-3d;
+		-moz-transform-style: preserve-3d;
+		transform-style: preserve-3d;
+		padding: 3em;
+		box-sizing: border-box;
+	}
+	#container {
+		display: block;
+		position: relative;
+		top: 50%;
+		-webkit-transform: translateY(-50%);
+		-ms-transform: translateY(-50%);
+		transform: translateY(-50%);
+		float: left;
+		width: 100%;
+	}
+	#container .module + .module {
+		margin-top: 1em;
+	}
+
+	/* Game */
+
+	#game svg {
+		border: 0.25em solid #333;
+		box-sizing: border-box;
+	}
+
+	/* Top and bottom bars */
+
+	.bar, .bar li, .bar h1 {
+		margin: 0;
+		padding: 0;
+	}
+	.bar, .bar li {
+		list-style: none;
+	}
+	.bar {
+		display: block;
+	}
+	.bar li {
+		display: inline-block;
+	}
+	.bar li + li {
+		margin-left: 3em;
+	}
+	.bar h1, .bar b {
+		text-transform: uppercase;
+		font-size: 1em;
+		font-weight: bold;
+	}
+	#players li {
+		border-left-width: 1em;
+		border-left-style: solid;
+		padding-left: 0.5em;
+	}
+
+	</style>
 </head>
 <body>
+<div id="container">
+	<ul id="top" class="bar module">
+		<li><h1>Ekans</h1></li>
+		<li><b>Room:</b> <span id="room"></span></li>
+		<li><b>Round:</b> <span id="round"></span></li>
+		<li><b>Share:</b> <span id="share"></span></li>
+	</ul>
+	<div id="game" class="module"></div>
+	<ul id="players" class="bar module"></ul>
+</div>
+
 <script src="client.js"></script>
 </body>
 </html>
