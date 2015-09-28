@@ -1,19 +1,19 @@
 {
-	"name": "ekans",
-	"version": "0.1.1",
-	"description": "A simple distributed snake/achtung game.",
-	"author": "Bjørn Friese <bearfrieze@gmail.com>",
-	"repository": {
-		"type": "git"
-	},
-	"dependencies": {
-		"ws": "*",
-		"express": "*",
-		"request": "*",
-		"htmlparser2": "*"
-	},
-	"scripts": {
-		"prestart": "node server/snakeHandler.js > server/snakes.json",
-		"start": "node server/server.js"
-	}
+  "name": "ekans",
+  "version": "0.1.1",
+  "description": "A simple distributed snake/achtung game.",
+  "author": "Bjørn Friese <bearfrieze@gmail.com>",
+  "repository": {
+    "type": "git"
+  },
+  "dependencies": {
+    "ws": "*",
+    "express": "*",
+    "request": "*",
+    "htmlparser2": "*"
+  },
+  "scripts": {
+    "prestart": "node server/snakeHandler.js > server/snakes.json",
+    "start": "node server/server.js"
+  }
 }
