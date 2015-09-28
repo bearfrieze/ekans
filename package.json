@@ -11,5 +11,9 @@
 		"express": "*",
 		"request": "*",
 		"htmlparser2": "*"
+	},
+	"scripts": {
+		"prestart": "node server/snakeHandler.js > server/snakes.json",
+		"start": "node server/server.js"
 	}
 }
